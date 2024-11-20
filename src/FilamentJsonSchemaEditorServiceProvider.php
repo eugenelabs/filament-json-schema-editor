@@ -17,7 +17,7 @@ class FilamentJsonSchemaEditorServiceProvider extends PackageServiceProvider
     public function bootingPackage()
     {
         FilamentAsset::register([
-            Js::make('json-schema-editor', __DIR__ . '/../dist/json-schema-editor.js'),
+            Js::make('json-schema-editor', __DIR__ . '/../dist/filament-plugin.js')->defer(true),
         ]);
     }
 }

@@ -8,7 +8,7 @@ esbuild.build({
     entryPoints: [
         'resources/js/index.js'
     ],
-    outfile: 'dist/json-schema-editor.js',
+    outfile: 'dist/filament-plugin.js',
     bundle: true,
     watch: shouldWatch,
 }).catch(() => process.exit(1));

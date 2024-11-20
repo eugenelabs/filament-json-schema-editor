@@ -1,88 +1,81 @@
-import '@json-editor/json-editor';
-
-alert('hello from json-schema-editor.js');
+import { JSONEditor } from '@json-editor/json-editor/dist/jsoneditor.js';
 
 export default (Alpine) => {
-    Alpine.data('jsonSchemaEditorFormComponent', ({
-        state,
-    }) => {
-        return {
-            state,
-            init: function () {
-                this.render();
-            },
-            render() {
+    Alpine.data('jsonSchemaEditorFormComponent', ({ customSchema, initialValue, pollInterval = 2000 }) => ({
+        state: initialValue,
+        editor: null,
+        intervalId: null,
 
-                var editor = new JSONEditor(document.getElementById('editor_holder'), {
-                    schema: {
-                        type: "object",
-                        title: "Car",
-                        properties: {
-                            make: {
-                                type: "string",
-                                enum: [
-                                    "Toyota",
-                                    "BMW",
-                                    "Honda",
-                                    "Ford",
-                                    "Chevy",
-                                    "VW"
-                                ]
-                            },
-                            model: {
-                                type: "string"
-                            },
-                            year: {
-                                type: "integer",
-                                enum: [
-                                    1995, 1996, 1997, 1998, 1999,
-                                    2000, 2001, 2002, 2003, 2004,
-                                    2005, 2006, 2007, 2008, 2009,
-                                    2010, 2011, 2012, 2013, 2014
-                                ],
-                                default: 2008
-                            },
-                            safety: {
-                                type: "integer",
-                                format: "rating",
-                                maximum: "5",
-                                exclusiveMaximum: false,
-                                readonly: false
-                            }
-                        }
+        init() {
+            this.render();
+
+            this.$watch('state', (value) => {
+                if (this.editor) {
+                    const editorValue = this.editor.getValue();
+                    if (JSON.stringify(editorValue) !== JSON.stringify(value)) {
+                        console.log(`[Watch] Syncing editor value with state...`);
+                        this.editor.setValue(value || {});
                     }
-                });
+                }
+            });
 
-                // Hook up the submit button to log to the console
-                document.getElementById('submit').addEventListener('click', function () {
-                    // Get the value from the editor
-                    console.log(editor.getValue());
-                });
+            this.startPolling();
+        },
 
+        render() {
+            this.editor = new JSONEditor(this.$refs.jsonschemaeditor, {
+                schema: customSchema,
+                startval: this.state || {},
+                show_errors: 'always',
+                compact: true,
+                disable_edit_json: true,
+                form_name_root: "Report",
+            });
 
-                // this.editor = null
+            this.editor.on('change', () => {
+                this.syncState();
+            });
+        },
 
-                // this.editor = new EditorView({
-                //     state: EditorState.create({
-                //         extensions: [
-                //             basicSetup,
-                //             keymap.of([indentWithTab]),
-                //             javascript(),
-                //             php(),
-                //             json(),
-                //             css(),
-                //             html(),
-                //             EditorView.updateListener.of((v) => {
-                //                 if (v.docChanged) {
-                //                     this.state = v.state.doc.toString();
-                //                 }
-                //             }),
-                //         ],
-                //         doc: this.state,
-                //     }),
-                //     parent: this.$refs.codeeditor,
-                // })
-            },
-        }
-    });
-}
+        syncState() {
+            const newValue = this.editor.getValue();
+
+            // If this.state is empty, set it to newValue
+            if (Object.keys(this.state).length === 0) {
+                this.state = newValue;
+            }
+        
+            // Update Alpine.js state and trigger Livewire sync
+            if (JSON.stringify(newValue) !== JSON.stringify(this.state)) {
+                this.state = newValue;
+        
+                if (typeof this.$wire !== 'undefined') {
+                    this.$wire.snapshotUpdated(newValue);
+                }
+            }
+        },
+
+        startPolling() {
+            this.intervalId = setInterval(() => {
+                if (this.editor) {
+                    this.syncState();
+                }
+            }, pollInterval);
+        },
+
+        stopPolling() {
+            if (this.intervalId) {
+                clearInterval(this.intervalId);
+                this.intervalId = null;
+            }
+        },
+
+        destroy() {
+            this.stopPolling();
+            if (this.editor) {
+                this.editor.destroy();
+                this.editor = null;
+            }
+        },
+    }));
+};
