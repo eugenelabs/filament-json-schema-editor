@@ -2,6 +2,7 @@
 
 namespace EugeneLabs\FilamentJsonSchemaEditor\Components;
 
+use Exception;
 use Filament\Forms\Components\Field;
 use Illuminate\Support\Collection;
 
@@ -15,7 +16,7 @@ class FilamentJsonSchemaEditor extends Field
 
     /**
      * Set the JSON schema for the editor, this is used to create the form fields.
-     * 
+     *
      * @param string|array|Collection $jsonSchema
      */
     public function setSchema(string|array|Collection $jsonSchema): static
@@ -27,7 +28,7 @@ class FilamentJsonSchemaEditor extends Field
         } else {
             $decoded = json_decode($jsonSchema, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new \Exception('Invalid JSON schema provided: ' . json_last_error_msg());
+                throw new Exception('Invalid JSON schema provided: ' . json_last_error_msg());
             }
             $this->jsonSchema = $decoded;
         }
@@ -37,7 +38,7 @@ class FilamentJsonSchemaEditor extends Field
 
     /**
      * Set the initial value for the editor.
-     * 
+     *
      * @param string|array|Collection $value
      */
     public function setValue(string|array|Collection $value): static
@@ -49,7 +50,7 @@ class FilamentJsonSchemaEditor extends Field
         } else {
             $decoded = json_decode($value, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new \Exception('Invalid JSON initial value provided: ' . json_last_error_msg());
+                throw new Exception('Invalid JSON initial value provided: ' . json_last_error_msg());
             }
             $this->value = $decoded;
         }
